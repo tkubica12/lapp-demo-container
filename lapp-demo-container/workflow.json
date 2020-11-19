@@ -1,0 +1,127 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "For_each": {
+                "type": "Foreach",
+                "foreach": "@triggerOutputs()?['body']",
+                "actions": {
+                    "HTTP": {
+                        "type": "Http",
+                        "inputs": {
+                            "method": "GET",
+                            "uri": "https://httpbin.org/anything",
+                            "queries": {
+                                "message": "@items('For_each')?['contentData']"
+                            }
+                        },
+                        "runAfter": {}
+                    },
+                    "Parse_JSON": {
+                        "type": "ParseJson",
+                        "inputs": {
+                            "content": "@body('HTTP')",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "args": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "data": {
+                                        "type": "string"
+                                    },
+                                    "files": {
+                                        "type": "object",
+                                        "properties": {}
+                                    },
+                                    "form": {
+                                        "type": "object",
+                                        "properties": {}
+                                    },
+                                    "headers": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Accept": {
+                                                "type": "string"
+                                            },
+                                            "Host": {
+                                                "type": "string"
+                                            },
+                                            "User-Agent": {
+                                                "type": "string"
+                                            },
+                                            "X-Amzn-Trace-Id": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "json": {},
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "origin": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "HTTP": [
+                                "Succeeded"
+                            ]
+                        }
+                    },
+                    "Send_an_email_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "office365"
+                                }
+                            },
+                            "method": "post",
+                            "body": {
+                                "To": "tokubica@microsoft.com",
+                                "Subject": "lapp-demo",
+                                "Body": "<p>Hello,<br>\n<br>\nmessage: &nbsp;@{body('Parse_JSON')?['args']?['message']}<br>\nuser-agent: @{body('Parse_JSON')?['headers']?['User-Agent']}</p>"
+                            },
+                            "path": "/v2/Mail"
+                        },
+                        "runAfter": {
+                            "Parse_JSON": [
+                                "Succeeded"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {}
+            }
+        },
+        "triggers": {
+            "When_messages_are_available_in_Service_Bus_queue": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "queueName": "lapp"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}

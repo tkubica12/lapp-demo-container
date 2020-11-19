@@ -1,1 +1,1 @@
-# lapp-demo-container
+# Logic App demo in Kubernetes
