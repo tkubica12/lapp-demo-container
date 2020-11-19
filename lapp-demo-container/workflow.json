@@ -84,7 +84,7 @@
                         "inputs": {
                             "host": {
                                 "connection": {
-                                    "referenceName": "office365"
+                                    "referenceName": "office365_1"
                                 }
                             },
                             "method": "post",

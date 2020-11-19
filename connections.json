@@ -20,18 +20,18 @@
     }
   },
   "managedApiConnections": {
-    "office365": {
+    "office365_1": {
       "api": {
         "id": "/subscriptions/a0f4a733-4fce-4d49-b8a8-d30541fc1b45/providers/Microsoft.Web/locations/westeurope/managedApis/office365"
       },
       "connection": {
-        "id": "/subscriptions/a0f4a733-4fce-4d49-b8a8-d30541fc1b45/resourceGroups/lapp/providers/Microsoft.Web/connections/office365"
+        "id": "/subscriptions/a0f4a733-4fce-4d49-b8a8-d30541fc1b45/resourceGroups/lapp/providers/Microsoft.Web/connections/office365-2"
       },
-      "connectionRuntimeUrl": "https://f8a53c19548eb8fe.13.common.logic-westeurope.azure-apihub.net/apim/office365/4453eeae89464bfdab58b522c46bd5eb/",
+      "connectionRuntimeUrl": "https://f8a53c19548eb8fe.13.common.logic-westeurope.azure-apihub.net/apim/office365/f6ae4031e67b4cba895b84a2cf43bd47/",
       "authentication": {
         "type": "Raw",
         "scheme": "Key",
-        "parameter": "@appsetting('office365-connectionKey')"
+        "parameter": "@appsetting('office365_1-connectionKey')"
       }
     }
   }

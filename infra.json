@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sourceEmail": {
@@ -82,20 +82,6 @@
                 "tier": "Standard"
             },
             "kind": "StorageV2"
-        },
-        {
-            "type": "Microsoft.Web/connections",
-            "name": "office365",
-            "apiVersion": "2016-06-01",
-            "location": "westeurope",
-            "kind": "V2",
-            "properties": {
-                "displayName": "[parameters('sourceEmail')]",
-                "customParameterValues": {},
-                "api": {
-                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/westeurope/managedApis/office365')]"
-                }
-            }
         },
         {
             "name": "demo-vnet",
@@ -380,6 +366,95 @@
                     ]
                 }
             }
+        },
+        {
+            "type": "Microsoft.Network/networkProfiles",
+            "name": "sqltools-networkProfile",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks','demo-vnet')]"
+            ],
+            "properties": {
+                "containerNetworkInterfaceConfigurations": [
+                    {
+                        "name": "eth0",
+                        "properties": {
+                            "ipConfigurations": [
+                                {
+                                    "name": "ipconfigprofile1",
+                                    "properties": {
+                                        "subnet": {
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'demo-vnet', 'aci-sub')]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "name": "sqltools-private",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkProfiles', 'sqltools-networkProfile')]"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "sqltools",
+                        "properties": {
+                            "image": "mcr.microsoft.com/mssql-tools",
+                            "command": [
+                                "tail",
+                                "-f",
+                                "/dev/null"
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": 1,
+                                    "memoryInGB": 1
+                                }
+                            },
+                            "environmentVariables": [],
+                            "ports": [
+                                {
+                                    "port": "80",
+                                    "protocol": "TCP"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Private",
+                    "ports": [
+                        {
+                            "port": "80",
+                            "protocol": "TCP"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "Id": "[resourceId('Microsoft.Network/networkProfiles', 'sqltools-networkProfile')]"
+                }
+            }
         }
-    ]
+    ],
+    "outputs": {
+        "serviceBusName": {
+            "type": "string",
+            "value": "[variables('serviceBusName')]"
+        },
+        "storageName": {
+            "type": "string",
+            "value": "[variables('storageName')]"
+        }
+    }
 }
