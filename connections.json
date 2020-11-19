@@ -8,6 +8,15 @@
         "id": "/serviceProviders/serviceBus"
       },
       "displayName": "azureServiceBus"
+    },
+    "sql": {
+      "parameterValues": {
+        "connectionString": "@appsetting('sql-connectionString')"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/sql"
+      },
+      "displayName": "sql"
     }
   },
   "managedApiConnections": {

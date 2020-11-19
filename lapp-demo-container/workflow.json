@@ -100,6 +100,24 @@
                                 "Succeeded"
                             ]
                         }
+                    },
+                    "Execute_Query": {
+                        "type": "ServiceProvider",
+                        "inputs": {
+                            "parameters": {
+                                "query": "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='myTable' and xtype='U')\n    CREATE TABLE myTable (\n        Message varchar(64) not null\n    )\nINSERT INTO myTable VALUES ('@{body('Parse_JSON')?['args']?['message']}')"
+                            },
+                            "serviceProviderConfiguration": {
+                                "connectionName": "sql",
+                                "operationId": "executeQuery",
+                                "serviceProviderId": "/serviceProviders/sql"
+                            }
+                        },
+                        "runAfter": {
+                            "Send_an_email_(V2)": [
+                                "Succeeded"
+                            ]
+                        }
                     }
                 },
                 "runAfter": {}
