@@ -266,6 +266,120 @@
                     ]
                 }
             }
+        },
+        {
+            "type": "Microsoft.Network/networkProfiles",
+            "name": "httpbin-networkProfile",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks','demo-vnet')]"
+            ],
+            "properties": {
+                "containerNetworkInterfaceConfigurations": [
+                    {
+                        "name": "eth0",
+                        "properties": {
+                            "ipConfigurations": [
+                                {
+                                    "name": "ipconfigprofile1",
+                                    "properties": {
+                                        "subnet": {
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'demo-vnet', 'aci-sub')]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "name": "httpbin-private",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkProfiles', 'httpbin-networkProfile')]"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "httpbin",
+                        "properties": {
+                            "image": "kennethreitz/httpbin",
+                            "resources": {
+                                "requests": {
+                                    "cpu": 1,
+                                    "memoryInGB": 1
+                                }
+                            },
+                            "environmentVariables": [],
+                            "ports": [
+                                {
+                                    "port": "80",
+                                    "protocol": "TCP"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Private",
+                    "ports": [
+                        {
+                            "port": "80",
+                            "protocol": "TCP"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "Id": "[resourceId('Microsoft.Network/networkProfiles', 'httpbin-networkProfile')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "name": "httpbin-public",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "containers": [
+                    {
+                        "name": "httpbin",
+                        "properties": {
+                            "image": "kennethreitz/httpbin",
+                            "resources": {
+                                "requests": {
+                                    "cpu": 1,
+                                    "memoryInGB": 1
+                                }
+                            },
+                            "environmentVariables": [],
+                            "ports": [
+                                {
+                                    "port": "80",
+                                    "protocol": "TCP"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "port": "80",
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            }
         }
     ]
 }
