@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "apiEndpoint": "20.67.127.219",
+    "AzureWebJobsStorage": "<storageConnectionString>",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "WORKFLOWS_SUBSCRIPTION_ID": "<yourSubscriptionId>",
+    "serviceBus-connectionString": "<serviceBusConnectionString>",
+    "WORKFLOWS_TENANT_ID": "<yourTenantId>",
+    "WORKFLOWS_RESOURCE_GROUP_NAME": "lapp",
+    "WORKFLOWS_LOCATION_NAME": "westeurope",
+    "sql-connectionString": "Server=1.2.3.4;Database=master;User Id=sa;Password=Azure12345678!;"
+  }
+}

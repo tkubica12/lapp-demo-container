@@ -10,7 +10,7 @@
                         "type": "Http",
                         "inputs": {
                             "method": "GET",
-                            "uri": "https://httpbin.org/anything",
+                            "uri": "@concat('http://', appsetting('apiEndpoint'), '/anything')",
                             "queries": {
                                 "message": "@items('For_each')?['contentData']"
                             }

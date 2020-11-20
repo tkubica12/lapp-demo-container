@@ -14,7 +14,8 @@
         "serviceBusName": "[concat('sb-', uniqueString(resourceGroup().id))]",
         "storageName": "[concat('store', uniqueString(resourceGroup().id))]",
         "logicAppStorageName": "[concat('lapp', uniqueString(resourceGroup().id))]",
-        "logicAppName": "[concat('lapp', uniqueString(resourceGroup().id))]"
+        "logicAppName": "[concat('lapp', uniqueString(resourceGroup().id))]",
+        "registryName": "[concat('registry', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
@@ -129,6 +130,12 @@
                                     }
                                 }
                             ]
+                        }
+                    },
+                    {
+                        "name": "aks-sub",
+                        "properties": {
+                            "addressPrefix": "10.0.2.0/24"
                         }
                     }
                 ]
@@ -538,6 +545,87 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "[variables('registryName')]",
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2019-05-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "name": "aks-lapp",
+            "apiVersion": "2020-09-01",
+            "dependsOn": [],
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "kubernetesVersion": "1.18.10",
+                "enableRBAC": true,
+                "dnsPrefix": "aks-lapp",
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "osDiskSizeGB": 0,
+                        "count": 1,
+                        "vmSize": "Standard_B2s",
+                        "osType": "Linux",
+                        "storageProfile": "ManagedDisks",
+                        "type": "VirtualMachineScaleSets",
+                        "mode": "System",
+                        "maxPods": 110,
+                        "availabilityZones": [
+                            "1",
+                            "2",
+                            "3"
+                        ],
+                        "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets','demo-vnet','aks-sub')]"
+                    }
+                ],
+                "networkProfile": {
+                    "loadBalancerSku": "standard",
+                    "networkPlugin": "azure",
+                    "serviceCidr": "172.16.0.0/24",
+                    "dnsServiceIP": "172.16.0.10",
+                    "dockerBridgeCidr": "172.17.0.1/16"
+                },
+                "apiServerAccessProfile": {
+                    "enablePrivateCluster": false
+                },
+                "addonProfiles": {}
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "name": "[concat(variables('registryName'), '/Microsoft.Authorization/', guid(subscription().id, 'acr'))]",
+            "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', 'aks-lapp')]"
+            ],
+            "properties": {
+                "principalId": "[reference('aks-lapp', '2020-09-01').identityProfile.kubeletidentity.objectId]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                "scope": "[resourceId('Microsoft.ContainerRegistry/registries/', variables('registryName'))]"
+            }
+        },
+        {
+            "name": "[concat('demo-vnet/aks-sub/Microsoft.Authorization/', guid(subscription().id, 'subnet'))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+            "apiVersion": "2017-05-01",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                "principalId": "[reference('aks-lapp', '2020-09-01').identityProfile.kubeletidentity.objectId]",
+                "scope": "[resourceId('Microsoft.Network/virtualNetworks/subnets','demo-vnet','aks-sub')]"
+            }
         }
     ],
     "outputs": {
@@ -548,6 +636,10 @@
         "storageName": {
             "type": "string",
             "value": "[variables('storageName')]"
+        },
+        "registryName": {
+            "type": "string",
+            "value": "[variables('registryName')]"
         }
     }
 }

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lapp-deployment
+  labels:
+    app: lapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lapp
+  template:
+    metadata:
+      labels:
+        app: lapp
+    spec:
+      containers:
+      - name: lapp
+        image: {{ .Values.registryName }}.azurecr.io/lapps/lapp:1.0
+        env:
+        - name: apiEndpoint
+          valueFrom:
+            secretKeyRef:
+                name: lapp-secrets
+                key: api
+        - name: AzureWebJobsStorage
+          valueFrom:
+            secretKeyRef:
+                name: lapp-secrets
+                key: storage
+        - name: serviceBus-connectionString
+          valueFrom:
+            secretKeyRef:
+                name: lapp-secrets
+                key: servicebus
+        - name: sql-connectionString
+          valueFrom:
+            secretKeyRef:
+                name: lapp-secrets
+                key: sql
+        - name: {{ .Values.officeConnectorSettingName}}
+          valueFrom:
+            secretKeyRef:
+                name: lapp-secrets
+                key: office365
