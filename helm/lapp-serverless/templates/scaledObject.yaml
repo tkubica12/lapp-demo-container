@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: servicebus-scaling
+spec:
+  scaleTargetRef:
+    name: lapp-deployment
+  pollingInterval: 5
+  cooldownPeriod:  15
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+  - type: azure-servicebus
+    metadata:
+      queueName: lapp
+      namespace: service-bus-namespace
+      messageCount: "5"
+      connectionFromEnv: SERVICEBUS_CONNECTIONSTRING_ENV_NAME

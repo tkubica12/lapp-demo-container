@@ -184,4 +184,43 @@ helm delete lapp-static
 ```
 
 ### Scale-to-zero and autoscaling with KEDA
-TBD
+First install KEDA - autoscaling and scale-to-zero solution.
+
+```powershell
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+kubectl create namespace keda
+helm install keda kedacore/keda --namespace keda
+```
+
+Add another Kubernetes Secret for KEDA to read queue information.
+
+```powershell
+# Get queue connection string
+$serviceBusName = (az deployment group show -n infra -g lapp --query properties.outputs.serviceBusName.value -o tsv)
+$queueConnectionString = (az servicebus queue authorization-rule keys list --namespace-name $serviceBusName --queue-name lapp -g lapp -n keda --query primaryConnectionString -o tsv)
+
+# Create secret
+kubectl create secret generic keda-servicebus --from-literal="connectionstring=$queueConnectionString" 
+```
+
+Deploy Logic App with scaler.
+
+```powershell
+helm upgrade -i lapp-serverless .\helm\lapp-serverless --set registryName=$registryName --set officeConnectorSettingName=office365_1-connectionKey
+```
+
+Note at idle there are no Logic App replicas running. KEDA is monitoring service bus will create Locic App instance when needed. Watch Pods.
+
+```powershell
+kubectl get pods -w
+```
+
+Use Azure portal to send message and what KEDA creating instance of Logic App on the fly.
+
+To stop receiving messages remove Helm release.
+
+
+```powershell
+helm delete lapp-serverless
+```
