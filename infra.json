@@ -12,7 +12,9 @@
     },
     "variables": {
         "serviceBusName": "[concat('sb-', uniqueString(resourceGroup().id))]",
-        "storageName": "[concat('store', uniqueString(resourceGroup().id))]"
+        "storageName": "[concat('store', uniqueString(resourceGroup().id))]",
+        "logicAppStorageName": "[concat('lapp', uniqueString(resourceGroup().id))]",
+        "logicAppName": "[concat('lapp', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
@@ -115,7 +117,18 @@
                     {
                         "name": "func-sub",
                         "properties": {
-                            "addressPrefix": "10.0.1.0/24"
+                            "addressPrefix": "10.0.1.0/24",
+                            "delegations": [
+                                {
+                                    "name": "AppServiceDelegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverFarms",
+                                        "actions": [
+                                            "Microsoft.Network/virtualNetworks/subnets/action"
+                                        ]
+                                    }
+                                }
+                            ]
                         }
                     }
                 ]
@@ -445,6 +458,86 @@
                     "Id": "[resourceId('Microsoft.Network/networkProfiles', 'sqltools-networkProfile')]"
                 }
             }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('logicAppStorageName')]",
+            "apiVersion": "2020-08-01-preview",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2"
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "name": "[variables('logicAppName')]",
+            "apiVersion": "2019-08-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "EP1",
+                "tier": "ElasticPremium"
+            },
+            "kind": "elastic",
+            "properties": {
+                "maximumElasticWorkerCount": 20
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[variables('logicAppName')]",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp,workflowapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('logicAppName'))]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('logicAppName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2019-06-01').keys[0].value,';')]"
+                        },
+                        {
+                            "name": "serviceBus-connectionString",
+                            "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('serviceBusName'), 'lappListener'),'2015-08-01').primaryKey]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "~12"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "networkConfig",
+                    "name": "virtualNetwork",
+                    "apiVersion": "2019-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', variables('logicAppName'))]"
+                    ],
+                    "properties": {
+                        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'demo-vnet', 'func-sub')]",
+                        "isSwift": true
+                    }
+                }
+            ]
         }
     ],
     "outputs": {

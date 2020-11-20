@@ -60,8 +60,36 @@ sqlcmd -S 20.71.76.176 -d master -U sa -P "Azure12345678!" -Q "SELECT * FROM myT
 exit
 ```
 
+Make sure you stop Logic App now so we can try running it in different environments.
+
+
 ## Run Logic App in Azure Functions Premium with private networking
-TBD
+There is infrastructure prepared in your environment to run Logic App on Azure Functions Premium integrated to VNET. 
+1. Use VSCode Logic Apps (preview) extension to deploy your Logic App. 
+2. Go to Application Settings in VSCode and choose (right click) Upload local settings (this will configure secrets such as storage and service bus connection string)
+3. Modifu sql-connection string to point to private instance of SQL server inside VNET
+
+To get IP address of sql-server-private you can use this command:
+
+```powershell
+az container show -n sql-server-private -g lapp --query ipAddress.ip -o tsv
+```
+
+You Logic App should be running now. In Azure portal go to Service Bus, lapp queue and create message of type text.
+
+In portal go to Logic App, Workflows and Monitor.
+
+Check you have received email with message.
+
+Check data written to private database - in this demo we are using sql-server-private.
+
+```powershell
+az container exec -n sqltools-private -g lapp --exec-command /bin/bash
+sqlcmd -S 10.0.0.5 -d master -U sa -P "Azure12345678!" -Q "SELECT * FROM myTable"
+exit
+```
+
+In portal stop Logic App now so we can try running it in different environments.
 
 ## Run Logic App in Azure Container Instance with private networking
 TBD
