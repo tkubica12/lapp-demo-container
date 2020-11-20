@@ -22,6 +22,7 @@ We will deploy Azure environment for various examples consisting of:
 - Storage Account to be used with Logic App runtime
 - Service Bus to be used as trigger for Logic App
 - MSSQL Tools in Azure Container Instances integrated to VNET to show database content
+- Azure Kubernetes Service
 
 ```powershell
 az group create -n lapp -l westeurope
