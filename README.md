@@ -224,3 +224,35 @@ To stop receiving messages remove Helm release.
 ```powershell
 helm delete lapp-serverless
 ```
+
+# Pausing environment
+You might want to keep resources deployed so you do not have to change configuration settings yet save some costs when demo is not used. 
+
+```powershell
+# Stop components
+az container stop -g lapp -n httpbin-private
+az container stop -g lapp -n httpbin-public
+az container stop -g lapp -n sql-server-private
+az container stop -g lapp -n sql-server-public
+az container stop -g lapp -n sqltools-private
+
+az extension add --name aks-preview
+az aks stop -n aks-lapp -g lapp
+
+# Start components
+az container start -g lapp -n httpbin-private
+az container start -g lapp -n httpbin-public
+az container start -g lapp -n sql-server-private
+az container start -g lapp -n sql-server-public
+az container start -g lapp -n sqltools-private
+
+az extension add --name aks-preview
+az aks start -n aks-lapp -g lapp
+```
+
+# Clean up environment
+To clean environment simply delete Resource Group.
+
+```powershell
+az group delete -n lapp -y
+```
